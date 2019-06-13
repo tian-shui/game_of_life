@@ -10,27 +10,32 @@ from random import choice
 from copy import deepcopy
 from time import sleep
 import tkinter as tk
-from tkinter import *
+import argparse
 
-#input_1 = np.zeros((5,5))
-#input_1[2,2] = 1
-#output_standard = np.zeros((5,5))
-
-#for i in range(1,len(input_1)-1):
-#    for j in range(1,len(input_1)-1):
-#        number = 0
-#        number += input_1[i-1,j-1]
-#        number += input_1[i-1,j]
-#        number += input_1[i-1,j+1]
-#        number += input_1[i,j-1]
-#        number += input_1[i,j+1]
-#        number += input_1[i+1,j-1]
-#        number += input_1[i+1,j]
-#        number += input_1[i+1,j+1]
-worldHigh = 10
-worldWidth= 10
-aliveNumber = 3
-deadNumber = 2
+def argumentProcess():
+    global arguments
+    parser = argparse.ArgumentParser(description='Game of Life')
+    parser.add_argument('-n','--cell_number',required=True,
+    type=int,nargs=1,default=10,help='The cell number every row/col [required].')
+    parser.add_argument('-w','--cell_width',required=True,
+    type=int,nargs=1,default=50,help='The width of every cell [required]. ')
+    parser.add_argument('-a','--alive_number',required=True,
+    type=int,nargs=1,default=3,help='The cell can be alive when the number of surrounded cells is a. ')
+    parser.add_argument('-k','--keep_number',required=True,
+    type=int,nargs=1,default=2,help='The cell will not change when the number of surrounded cells is k. ')
+    parser.add_argument('-s','--speed',required=True,
+    type=int,nargs=1,default=1,help='The speed that canvas change is s. ')
+    parser.add_argument('-t','--times',required=True,
+    type=int,nargs=1,default=10,help='The times that canvas change is t. ')
+    args=parser.parse_args()
+    arguments={}
+    arguments["cell number"]=args.cell_number[0]
+    arguments["cell width"]=args.cell_width[0]
+    arguments["alive number"]=args.alive_number[0]
+    arguments["keep number"]=args.keep_number[0]
+    arguments["speed"]=args.speed[0]
+    arguments["times"]=args.times[0]
+    
 class Point:
     def __init__(self,position):
         self.pos = position
@@ -40,11 +45,6 @@ class Point:
         self.isAlive=True
     def setDead(self):
         self.isAlive=False
-    def display(self):
-        if self.isAlive:
-            return '*'
-        else:
-            return ' '
         
 class World:
     def __init__(self):
@@ -53,9 +53,9 @@ class World:
         
     def initialWorld(self):
         world = []
-        for pos_x in range(worldHigh):
+        for pos_x in range(arguments["cell number"]):
             column=[]
-            for pos_y in range(worldWidth):
+            for pos_y in range(arguments["cell number"]):
                 column.append(Point((pos_x,pos_y)))
             world.append(column)
         return world
@@ -74,19 +74,13 @@ class World:
                 point_x = point_obj.x + x
                 point_y = point_obj.y + y
                 if ((point_x,point_y) == point_obj.pos) or \
-                ((point_x < 0) or (point_x >= worldHigh)) or \
-                ((point_y < 0) or (point_y >= worldWidth)):
+                ((point_x < 0) or (point_x >= arguments["cell number"])) or \
+                ((point_y < 0) or (point_y >= arguments["cell number"])):
                     continue
 
                 if self.world[point_x][point_y].isAlive:
                     number += 1
         return number
-    
-    def display(self):
-        if self.isAlive:
-            return '*'
-        else:
-            return ' '
     
     def gameProcess(self):
         new_world = deepcopy(self.world)
@@ -96,11 +90,10 @@ class World:
             for y, _ in enumerate(widelist):
                 current_point = new_world[x][y]
                 alive_num = self.count(current_point)
-                if alive_num == aliveNumber:
+                if alive_num == arguments["alive number"]:
                     current_point.setAlive()
-                elif alive_num != deadNumber:
-                    current_point.setDead()
-                    
+                elif alive_num != arguments["keep number"]:
+                    current_point.setDead()                    
                 if current_point.isAlive:
                     row.append(1)
                 else:
@@ -108,13 +101,12 @@ class World:
             displist.append(row)
         self.world = new_world
         return displist
-       # sleep(0.2)
 
 def cellDisplay(displist):
-    width = 50
-    for i in range(0,10):
+    width = arguments["cell width"]
+    for i in range(0,arguments["cell number"]):
         pos_x = i*width
-        for j in range(0,10):
+        for j in range(0,arguments["cell number"]):
             pos_y = j*width
             canvas.create_rectangle(pos_x,pos_y,pos_x + width, pos_y + width, 
                                     fill='white')
@@ -128,33 +120,21 @@ def cellDisplay(displist):
                                          fill='black')    
                 
 if __name__ == '__main__':
-    current_world = World()
-    #displist = current_world.gameProcess()
-    window = tk.Tk()
-    canvas = tk.Canvas(window, height=500, width=500)
-    canvas.pack()
-    looptimes=10
-    aa=[]
-    for times in range(looptimes):
-        displist = current_world.gameProcess()
-        aa.append(displist)
-        cellDisplay(displist)
-        window.update()
-        sleep(1)
+    if argumentProcess():
+        current_world = World()
+        window = tk.Tk()
+        canvas = tk.Canvas(window, height=arguments["cell number"]*arguments["cell width"],
+        width=arguments["cell number"]*arguments["cell width"])
+        canvas.pack()
+        looptimes=arguments["times"]
+        aa=[]
+        for times in range(looptimes):
+            displist = current_world.gameProcess()
+            aa.append(displist)
+            cellDisplay(displist)
+            window.update()
+            sleep(arguments["speed"])
     
     btn = tk.Button(window,text='Start')
     btn.pack()
-    tk.mainloop() 
-    
-    
-#    listb = tk.Listbox(window)          #  创建两个列表组件
-#    for item in displist:               # 第一个小部件插入数据
-#        listb.insert(0,item)
-#     
-#    listb.pack()                        # 将小部件放置到主窗口中
-#    window.mainloop() 
-
-      
-        
-
-        
+    tk.mainloop()          
