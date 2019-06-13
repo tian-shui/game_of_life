@@ -5,37 +5,11 @@ Created on Wed Jun 12 12:30:46 2019
 @author: Administrator
 """
 
-import numpy as np
 from random import choice
 from copy import deepcopy
 from time import sleep
 import tkinter as tk
-import argparse
 
-def argumentProcess():
-    global arguments
-    parser = argparse.ArgumentParser(description='Game of Life')
-    parser.add_argument('-n','--cell_number',required=True,
-    type=int,nargs=1,default=10,help='The cell number every row/col [required].')
-    parser.add_argument('-w','--cell_width',required=True,
-    type=int,nargs=1,default=50,help='The width of every cell [required]. ')
-    parser.add_argument('-a','--alive_number',required=True,
-    type=int,nargs=1,default=3,help='The cell can be alive when the number of surrounded cells is a. ')
-    parser.add_argument('-k','--keep_number',required=True,
-    type=int,nargs=1,default=2,help='The cell will not change when the number of surrounded cells is k. ')
-    parser.add_argument('-s','--speed',required=True,
-    type=int,nargs=1,default=1,help='The speed that canvas change is s. ')
-    parser.add_argument('-t','--times',required=True,
-    type=int,nargs=1,default=10,help='The times that canvas change is t. ')
-    args=parser.parse_args()
-    arguments={}
-    arguments["cell number"]=args.cell_number[0]
-    arguments["cell width"]=args.cell_width[0]
-    arguments["alive number"]=args.alive_number[0]
-    arguments["keep number"]=args.keep_number[0]
-    arguments["speed"]=args.speed[0]
-    arguments["times"]=args.times[0]
-    
 class Point:
     def __init__(self,position):
         self.pos = position
@@ -53,9 +27,9 @@ class World:
         
     def initialWorld(self):
         world = []
-        for pos_x in range(arguments["cell number"]):
+        for pos_x in range(cell_number):
             column=[]
-            for pos_y in range(arguments["cell number"]):
+            for pos_y in range(cell_number):
                 column.append(Point((pos_x,pos_y)))
             world.append(column)
         return world
@@ -74,8 +48,8 @@ class World:
                 point_x = point_obj.x + x
                 point_y = point_obj.y + y
                 if ((point_x,point_y) == point_obj.pos) or \
-                ((point_x < 0) or (point_x >= arguments["cell number"])) or \
-                ((point_y < 0) or (point_y >= arguments["cell number"])):
+                ((point_x < 0) or (point_x >= cell_number)) or \
+                ((point_y < 0) or (point_y >= cell_number)):
                     continue
 
                 if self.world[point_x][point_y].isAlive:
@@ -90,9 +64,9 @@ class World:
             for y, _ in enumerate(widelist):
                 current_point = new_world[x][y]
                 alive_num = self.count(current_point)
-                if alive_num == arguments["alive number"]:
+                if alive_num == alive_number:
                     current_point.setAlive()
-                elif alive_num != arguments["keep number"]:
+                elif alive_num != keep_number:
                     current_point.setDead()                    
                 if current_point.isAlive:
                     row.append(1)
@@ -103,10 +77,10 @@ class World:
         return displist
 
 def cellDisplay(displist):
-    width = arguments["cell width"]
-    for i in range(0,arguments["cell number"]):
+    width = cell_width
+    for i in range(0,cell_number):
         pos_x = i*width
-        for j in range(0,arguments["cell number"]):
+        for j in range(0,cell_number):
             pos_y = j*width
             canvas.create_rectangle(pos_x,pos_y,pos_x + width, pos_y + width, 
                                     fill='white')
@@ -120,21 +94,29 @@ def cellDisplay(displist):
                                          fill='black')    
                 
 if __name__ == '__main__':
-    if argumentProcess():
-        current_world = World()
-        window = tk.Tk()
-        canvas = tk.Canvas(window, height=arguments["cell number"]*arguments["cell width"],
-        width=arguments["cell number"]*arguments["cell width"])
-        canvas.pack()
-        looptimes=arguments["times"]
-        aa=[]
-        for times in range(looptimes):
-            displist = current_world.gameProcess()
-            aa.append(displist)
-            cellDisplay(displist)
-            window.update()
-            sleep(arguments["speed"])
-    
-    btn = tk.Button(window,text='Start')
-    btn.pack()
-    tk.mainloop()          
+    cell_number = int(input('Please input the number of cell:'))
+    cell_width = int(input('Please input the width of cell:'))
+    alive_number = int(input('Please input the number of alive:'))
+    keep_number = int(input('Please input the number of keep:'))
+    speed = float(input('Please input the speed:'))
+    times = int(input('Please input the times:'))
+
+    current_world = World()
+    window = tk.Tk()
+    window.title('game of life')
+    l = tk.Label(window, text='Welcome to the game of life!', bg='white', font=('Arial', 12), width=30, height=2)
+    l.pack()
+    canvas = tk.Canvas(window, height=cell_number*cell_width,
+                       width=cell_number*cell_width)
+    canvas.pack()
+
+    for time in range(times):
+        displist = current_world.gameProcess()
+        cellDisplay(displist)
+        window.update()
+        sleep(speed)
+
+tk.mainloop()
+
+
+
